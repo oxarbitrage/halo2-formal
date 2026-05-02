@@ -54,14 +54,43 @@ All definitions and theorems live under the `Halo2` namespace. Built on top of [
 | **End-to-end circuit correctness** | Gate + wire constraint → `c(1) = a(0) * b(0) + b(1)` |
 | **Gate composition** | Multiple satisfied gates can constrain the same columns |
 
+### Range check (`Halo2/RangeCheck.lean`)
+
+| Component | Description |
+|-----------|-------------|
+| Decomposition | Base-b word decomposition: `v = Σᵢ wᵢ · b^i` with each `wᵢ < b` |
+| **Range check soundness** | Valid decomposition → `v < b^w` |
+| **Range check completeness** | `v < b^w` → decomposition exists (via Euclidean division) |
+
+### Fiat-Shamir transcript (`Halo2/Transcript.lean`)
+
+| Component | Description |
+|-----------|-------------|
+| Transcript state | Sequence of absorbed field elements |
+| Challenge derivation | Iterated PoseidonHash fold over absorbed values |
+| Absorb injectivity | Different absorbed values → different transcript states |
+| **Challenge binding** | Under Poseidon collision resistance, distinct inputs → distinct challenges |
+
+### ECC gadget (`Halo2/ECCGadget.lean`)
+
+| Component | Description |
+|-----------|-------------|
+| Exceptional cases | `P = 0 ∨ Q = 0 ∨ P = Q ∨ P = -Q` |
+| Incomplete addition commutativity | Non-exceptional addition is commutative |
+| Fixed-base table | Precomputed `[w · 2^(3i)] B` for 3-bit windows |
+| **Fixed-base mul correctness** | Windowed computation = standard scalar multiple |
+| **Scalar bound** | Windowed scalar < `8^85` (from range check soundness) |
+
 ## Axioms
 
 - **Generator points** (`G`, `H`): opaque data from hash-to-curve
 - **IPA opening proof** and verification: opaque type and relation
 - **IPA completeness**: honestly generated proofs verify
 - **Permutation soundness**: product equality for all challenges implies copy constraints (Schwartz-Zippel)
+- **Poseidon collision resistance**: distinct inputs produce distinct outputs (for Fiat-Shamir binding)
+- **Non-exceptional sum non-zero**: `P + Q ≠ 0` when P, Q are non-exceptional (DLP-based)
 
-All gate soundness, permutation completeness, lookup, and circuit correctness properties are fully proven.
+All gate soundness, permutation completeness, lookup, range check, fixed-base multiplication, and circuit correctness properties are fully proven.
 
 ## Building
 
