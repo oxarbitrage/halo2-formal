@@ -158,6 +158,67 @@ theorem gates_compose {n : ℕ} (g₁ g₂ : Gate n) (a b c : Column n)
     ∀ i, g₁.eval a b c i = 0 ∧ g₂.eval a b c i = 0 :=
   fun i => ⟨h₁ i, h₂ i⟩
 
+/-! ## Lookup argument -/
+
+/-- **Lookup completeness**: if a witness map `w` maps every witness value
+to a table entry, then the lookup products are equal.
+
+`∏ᵢ (γ + f(i)) = ∏ᵢ (γ + table(w(i)))` -/
+theorem lookup_prod_eq {n m : ℕ} (f : Column n) (table : Table m)
+    (w : Fin n → Fin m) (hw : lookupWitness f table w) (γ : Pasta.Fp) :
+    lookupProdF f γ = lookupProdT table w γ := by
+  unfold lookupProdF lookupProdT
+  congr 1; ext i; rw [hw i]
+
+/-- A lookup witness implies lookup satisfaction. -/
+theorem lookupSatisfied_of_witness {n m : ℕ} (f : Column n) (table : Table m)
+    (w : Fin n → Fin m) (hw : lookupWitness f table w) :
+    lookupSatisfied f table := by
+  intro i; exact ⟨w i, hw i⟩
+
+/-- **Lookup soundness**: if the lookup is satisfied, there exists a
+witness map. -/
+theorem lookup_witness_of_satisfied {n m : ℕ} (f : Column n) (table : Table m)
+    (h : lookupSatisfied f table) :
+    ∃ w : Fin n → Fin m, lookupWitness f table w := by
+  choose w hw using h
+  exact ⟨w, hw⟩
+
+/-! ## Circuit example: `c = a * b + d`
+
+We demonstrate that the PLONKish gate model can express and verify
+a concrete computation. The circuit uses 2 rows:
+- Row 0: multiplication `a(0) * b(0) = c(0)` (intermediate result)
+- Row 1: addition `a(1) + b(1) = c(1)` (final result)
+
+The wire constraint `c(0) = a(1)` connects the intermediate result
+to the addition input.
+-/
+
+/-- The `mulAddCircuit` gate is satisfied iff row 0 computes a product
+and row 1 computes a sum. -/
+theorem mulAddCircuit_sound (a b c : Column 2)
+    (h : mulAddCircuit.satisfied a b c) :
+    a 0 * b 0 = c 0 ∧ a 1 + b 1 = c 1 := by
+  constructor
+  · have := h 0; simp [Gate.eval, mulAddCircuit] at this; linear_combination this
+  · have := h 1; simp [Gate.eval, mulAddCircuit] at this; linear_combination this
+
+/-- **End-to-end circuit correctness**: if the `mulAddCircuit` gate is
+satisfied AND the wire constraint `c(0) = a(1)` holds, then
+`c(1) = a(0) * b(0) + b(1)`.
+
+This is `result = x * y + z` where `x = a(0)`, `y = b(0)`, `z = b(1)`,
+`result = c(1)`. -/
+theorem mulAdd_correct (a b c : Column 2)
+    (hgate : mulAddCircuit.satisfied a b c)
+    (hwire : c 0 = a 1) :
+    c 1 = a 0 * b 0 + b 1 := by
+  obtain ⟨hmul, hadd⟩ := mulAddCircuit_sound a b c hgate
+  rw [hwire.symm] at hadd
+  rw [← hmul] at hadd
+  exact hadd.symm
+
 end
 
 end Halo2

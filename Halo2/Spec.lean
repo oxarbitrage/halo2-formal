@@ -165,6 +165,66 @@ the assignment at its permuted position. -/
 def copySatisfied {n : ℕ} (a : Column n) (σ : WirePerm n) : Prop :=
   ∀ i : Fin n, a i = a (σ i)
 
+/-! ## Lookup argument
+
+The lookup argument ensures every value in a witness column appears
+in a fixed lookup table. Halo 2 uses a product-based argument:
+
+Given witness values `f(i)` and table values `t(i)`, the check is:
+
+  `∏ᵢ (γ + f(i)) = ∏ᵢ (γ + t(s(i)))`
+
+where `s` is a permutation showing how to reorder `t` to match `f`.
+More precisely, the prover sorts `f` and `t` together and the product
+argument verifies consistency.
+
+For simplicity we formalize the core subset check: every `f(i)` appears
+in the table.
+-/
+
+/-- A lookup table: a column of allowed values. -/
+abbrev Table (m : ℕ) := Fin m → Pasta.Fp
+
+/-- Lookup satisfaction: every witness value appears in the table. -/
+def lookupSatisfied {n m : ℕ} (f : Column n) (table : Table m) : Prop :=
+  ∀ i : Fin n, ∃ j : Fin m, f i = table j
+
+/-- The lookup product check (simplified).
+
+If there exists a mapping `w : Fin n → Fin m` such that `f(i) = table(w(i))`
+for all `i`, then `∏ᵢ (γ + f(i)) = ∏ᵢ (γ + table(w(i)))`. -/
+def lookupWitness {n m : ℕ} (f : Column n) (table : Table m)
+    (w : Fin n → Fin m) : Prop :=
+  ∀ i : Fin n, f i = table (w i)
+
+/-- The lookup product for witness values. -/
+def lookupProdF {n : ℕ} (f : Column n) (γ : Pasta.Fp) : Pasta.Fp :=
+  ∏ i : Fin n, (γ + f i)
+
+/-- The lookup product for table values via witness map. -/
+def lookupProdT {n m : ℕ} (table : Table m) (w : Fin n → Fin m)
+    (γ : Pasta.Fp) : Pasta.Fp :=
+  ∏ i : Fin n, (γ + table (w i))
+
+/-! ## Circuit examples
+
+A circuit is a collection of gates and wire constraints that together
+enforce a computation. We demonstrate with concrete examples.
+-/
+
+/-- A circuit for `c = a * b + d` using two rows:
+    - Row 0: multiplication gate `a * b = intermediate`
+    - Row 1: addition gate `intermediate + d = c`
+
+    The wire connecting `intermediate` across rows is enforced by
+    the permutation argument (column c row 0 = column a row 1). -/
+def mulAddCircuit : Gate 2 where
+  q_L := fun i => if i.val = 0 then 0 else 1
+  q_R := fun i => if i.val = 0 then 0 else 1
+  q_O := fun _ => -1
+  q_M := fun j => if j.val = 0 then 1 else 0
+  q_C := fun _ => 0
+
 end
 
 end Halo2

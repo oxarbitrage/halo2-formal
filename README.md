@@ -31,6 +31,11 @@ All definitions and theorems live under the `Halo2` namespace. Built on top of [
 | Boolean gate | `a ∈ {0,1}` — selectors `(-1, 0, 0, 1, 0)` with `b = a` |
 | Wire permutation | `Fin n → Fin n` mapping connected wires |
 | Grand product | Accumulator `Z(i)` for the permutation argument |
+| Product-based perm check | `∏ᵢ (a(i) + β·i + γ) = ∏ᵢ (a(i) + β·σ(i) + γ)` |
+| Copy constraints | `∀ i, a(i) = a(σ(i))` |
+| Lookup table | Subset check: every witness value appears in a table |
+| Lookup witness map | `w : Fin n → Fin m` mapping witness to table entries |
+| Circuit example | `mulAddCircuit`: computes `a * b + d` in 2 rows |
 
 ### Properties (`Halo2/Properties.lean`)
 
@@ -40,7 +45,13 @@ All definitions and theorems live under the `Halo2` namespace. Built on top of [
 | **Multiplication gate soundness** | Satisfied gate ↔ `a * b = c` on every row |
 | **Constant gate soundness** | Satisfied gate → `a = val` on every row |
 | **Boolean gate soundness** | Satisfied gate → `a = 0 ∨ a = 1` on every row |
-| **Identity permutation** | Identity permutation trivially satisfies grand product check |
+| **Permutation argument completeness** | Copy constraints + σ bijective → grand product check passes |
+| **Permutation check identity** | Identity permutation trivially passes |
+| **Permutation argument soundness** | Check passes for all challenges → copy constraints (axiom, Schwartz-Zippel) |
+| **Lookup completeness** | Witness map exists → lookup products equal |
+| **Lookup soundness** | Lookup satisfied ↔ witness map exists |
+| **Circuit soundness** | `mulAddCircuit` satisfied → row 0 is mul, row 1 is add |
+| **End-to-end circuit correctness** | Gate + wire constraint → `c(1) = a(0) * b(0) + b(1)` |
 | **Gate composition** | Multiple satisfied gates can constrain the same columns |
 
 ## Axioms
@@ -48,8 +59,9 @@ All definitions and theorems live under the `Halo2` namespace. Built on top of [
 - **Generator points** (`G`, `H`): opaque data from hash-to-curve
 - **IPA opening proof** and verification: opaque type and relation
 - **IPA completeness**: honestly generated proofs verify
+- **Permutation soundness**: product equality for all challenges implies copy constraints (Schwartz-Zippel)
 
-All gate soundness and permutation properties are fully proven.
+All gate soundness, permutation completeness, lookup, and circuit correctness properties are fully proven.
 
 ## Building
 
