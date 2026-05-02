@@ -139,6 +139,32 @@ def permSatisfied {n : ℕ} (a : Column n) (σ : WirePerm n)
     (β γ : Pasta.Fp) : Prop :=
   permProduct a σ β γ n = 1
 
+/-! ## Product-based permutation check
+
+The division-based formulation above is used in the protocol's running
+accumulator. For proving soundness, the equivalent product formulation
+is cleaner: the numerator product must equal the denominator product.
+-/
+
+/-- Numerator product: `∏ᵢ (a(i) + β·i + γ)`. -/
+def numProd {n : ℕ} (a : Column n) (β γ : Pasta.Fp) : Pasta.Fp :=
+  ∏ i : Fin n, (a i + β * (i.val : Pasta.Fp) + γ)
+
+/-- Denominator product: `∏ᵢ (a(i) + β·σ(i) + γ)`. -/
+def denProd {n : ℕ} (a : Column n) (σ : WirePerm n) (β γ : Pasta.Fp) :
+    Pasta.Fp :=
+  ∏ i : Fin n, (a i + β * ((σ i).val : Pasta.Fp) + γ)
+
+/-- The permutation check in product form: numerator = denominator. -/
+def permCheck {n : ℕ} (a : Column n) (σ : WirePerm n)
+    (β γ : Pasta.Fp) : Prop :=
+  numProd a β γ = denProd a σ β γ
+
+/-- Copy constraint satisfaction: the assignment at each position equals
+the assignment at its permuted position. -/
+def copySatisfied {n : ℕ} (a : Column n) (σ : WirePerm n) : Prop :=
+  ∀ i : Fin n, a i = a (σ i)
+
 end
 
 end Halo2

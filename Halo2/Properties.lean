@@ -104,6 +104,49 @@ theorem perm_id_satisfied {n : ℕ} (a : Column n)
     · rw [ih]; simp [div_self (hnd ⟨_, ‹_›⟩)]
     · exact ih
 
+/-! ## Permutation argument soundness -/
+
+/-- **Permutation argument completeness**: if the copy constraints are
+satisfied and `σ` is a bijection, then the permutation check passes.
+
+This is the core algebraic property of PLONKish: equal wire values at
+permuted positions imply the grand product numerator equals the denominator.
+
+Proof: if `a(i) = a(σ(i))` for all `i`, then each denominator term
+`a(i) + β·σ(i) + γ` equals `a(σ(i)) + β·σ(i) + γ`. Since `σ` is a
+bijection, the denominator product is just a reindexing of the numerator
+product via `Equiv.prod_comp`. -/
+theorem permCheck_of_copy {n : ℕ} (a : Column n) (σ : WirePerm n)
+    (hσ : Function.Bijective σ)
+    (hcopy : copySatisfied a σ) (β γ : Pasta.Fp) :
+    permCheck a σ β γ := by
+  unfold permCheck numProd denProd copySatisfied at *
+  conv_rhs => arg 2; ext i; rw [hcopy i]
+  exact (Equiv.prod_comp (Equiv.ofBijective σ hσ)
+    (fun j => a j + β * (j.val : Pasta.Fp) + γ)).symm
+
+/-- **Permutation check for identity**: the identity permutation always
+satisfies the permutation check (the products are trivially equal). -/
+theorem permCheck_id {n : ℕ} (a : Column n) (β γ : Pasta.Fp) :
+    permCheck a (fun i => i) β γ := by
+  unfold permCheck numProd denProd
+  rfl
+
+/-- **Copy constraint necessity**: if `σ` is a bijection and the
+permutation check passes for ALL challenges `β` and `γ`, then the
+copy constraints must be satisfied.
+
+This is the soundness direction: if `∏ᵢ (a(i) + β·i + γ) = ∏ᵢ (a(i) + β·σ(i) + γ)`
+holds for every `β, γ`, then `a(i) = a(σ(i))` for all `i`.
+
+The proof that product equality for all challenges implies pointwise
+equality relies on the Schwartz-Zippel lemma (polynomials that agree
+everywhere are identical). We axiomatize this step. -/
+axiom permCheck_sound {n : ℕ} (a : Column n) (σ : WirePerm n)
+    (hσ : Function.Bijective σ)
+    (hcheck : ∀ β γ : Pasta.Fp, permCheck a σ β γ) :
+    copySatisfied a σ
+
 /-! ## Gate composition -/
 
 /-- If two gates are independently satisfied, they can be composed.
