@@ -121,6 +121,34 @@ theorem challenge_binding_pair (d x y : Pasta.Fp) (hxy : x ≠ y) :
   intro h
   exact hxy (poseidon_collision_resistant d x d y h).2
 
+/-! ## Domain separation
+
+Domain separation prevents Frozen Heart class vulnerabilities where
+a proof generated for one protocol context is replayed in another.
+Different domain separators yield different challenges. -/
+
+/-- **Domain separation**: transcripts with different domain separators
+produce different challenges for the same absorbed value. -/
+theorem domain_separation (d₁ d₂ x : Pasta.Fp) (hd : d₁ ≠ d₂) :
+    ((Transcript.init d₁).absorb x).squeeze ≠
+    ((Transcript.init d₂).absorb x).squeeze := by
+  rw [squeeze_init_absorb, squeeze_init_absorb]
+  intro h
+  exact hd (poseidon_collision_resistant d₁ x d₂ x h).1
+
+/-- **Full transcript separation**: different domain OR different value
+implies different challenges under collision resistance. -/
+theorem transcript_separation (d₁ d₂ x₁ x₂ : Pasta.Fp)
+    (h : d₁ ≠ d₂ ∨ x₁ ≠ x₂) :
+    ((Transcript.init d₁).absorb x₁).squeeze ≠
+    ((Transcript.init d₂).absorb x₂).squeeze := by
+  rw [squeeze_init_absorb, squeeze_init_absorb]
+  intro heq
+  have ⟨hd, hx⟩ := poseidon_collision_resistant d₁ x₁ d₂ x₂ heq
+  cases h with
+  | inl hd' => exact hd' hd
+  | inr hx' => exact hx' hx
+
 end
 
 end Halo2

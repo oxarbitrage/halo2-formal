@@ -117,6 +117,41 @@ theorem scalar_bound (ws : WindowedScalar) :
   exact range_check_soundness (show 0 < windowBase by decide)
     ⟨fun i => (ws i).val, fun i => (ws i).isLt⟩
 
+/-! ## Variable-base scalar multiplication
+
+Variable-base multiplication uses the double-and-add algorithm: decompose
+the scalar into bits and compute `∑ᵢ bᵢ · 2^i · P`. This is used for
+points not known at circuit compilation time (e.g., witness values).
+
+See §4.1.4 of the Halo 2 book.
+-/
+
+/-- A bit decomposition for variable-base scalar multiplication. -/
+abbrev ScalarBits (n : ℕ) := Fin n → Fin 2
+
+/-- Reconstruct the scalar from a bit decomposition. -/
+def scalarOfBits {n : ℕ} (bits : ScalarBits n) : ℕ :=
+  ∑ i : Fin n, (bits i).val * 2 ^ i.val
+
+/-- Variable-base scalar multiplication via bit decomposition. -/
+def variableBaseMul {n : ℕ} (P : Pallas.toAffine.Point) (bits : ScalarBits n) :
+    Pallas.toAffine.Point :=
+  ∑ i : Fin n, ((bits i).val * 2 ^ i.val) • P
+
+/-- **Variable-base multiplication correctness**: the bit-decomposed
+computation equals the standard scalar multiple. -/
+theorem variableBaseMul_eq_smul {n : ℕ} (P : Pallas.toAffine.Point)
+    (bits : ScalarBits n) :
+    variableBaseMul P bits = scalarOfBits bits • P := by
+  simp only [variableBaseMul, scalarOfBits]
+  exact sum_nsmul_eq _ _ P
+
+/-- A bit-decomposed scalar is bounded by `2^n`. -/
+theorem scalar_bits_bound {n : ℕ} (bits : ScalarBits n) :
+    scalarOfBits bits < 2 ^ n :=
+  range_check_soundness (show 0 < 2 by decide)
+    ⟨fun i => (bits i).val, fun i => (bits i).isLt⟩
+
 end
 
 end Halo2

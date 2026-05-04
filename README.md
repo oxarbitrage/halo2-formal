@@ -70,6 +70,8 @@ All definitions and theorems live under the `Halo2` namespace. Built on top of [
 | Challenge derivation | Iterated PoseidonHash fold over absorbed values |
 | Absorb injectivity | Different absorbed values → different transcript states |
 | **Challenge binding** | Under Poseidon collision resistance, distinct inputs → distinct challenges |
+| **Domain separation** | Different domain separators → different challenges (prevents Frozen Heart) |
+| **Transcript separation** | Different domain OR different value → different challenges |
 
 ### ECC gadget (`Halo2/ECCGadget.lean`)
 
@@ -80,6 +82,10 @@ All definitions and theorems live under the `Halo2` namespace. Built on top of [
 | Fixed-base table | Precomputed `[w · 2^(3i)] B` for 3-bit windows |
 | **Fixed-base mul correctness** | Windowed computation = standard scalar multiple |
 | **Scalar bound** | Windowed scalar < `8^85` (from range check soundness) |
+| Variable-base bit decomposition | `ScalarBits n = Fin n → Fin 2` with reconstruction |
+| Variable-base mul | `∑ᵢ bᵢ · 2^i · P` via double-and-add |
+| **Variable-base mul correctness** | Bit-decomposed computation = standard scalar multiple |
+| **Variable-base scalar bound** | Bit-decomposed scalar < `2^n` |
 
 ## Axioms
 
