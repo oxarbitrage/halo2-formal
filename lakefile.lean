@@ -15,3 +15,6 @@ require pasta_formal from git
 
 require poseidon_formal from git
   "https://github.com/oxarbitrage/poseidon-formal"
+
+require sinsemilla_formal from git
+  "https://github.com/oxarbitrage/sinsemilla-formal"

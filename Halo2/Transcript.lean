@@ -51,6 +51,7 @@ def Transcript.foldHash : List Pasta.Fp → Pasta.Fp
   | [] => 0
   | [x] => x
   | x :: y :: rest => Transcript.foldHash (Poseidon.poseidonHash x y :: rest)
+termination_by l => l.length
 
 
 /-- Squeeze a challenge from the transcript. -/
