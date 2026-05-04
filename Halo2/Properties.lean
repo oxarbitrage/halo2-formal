@@ -141,7 +141,41 @@ holds for every `β, γ`, then `a(i) = a(σ(i))` for all `i`.
 
 The proof that product equality for all challenges implies pointwise
 equality relies on the Schwartz-Zippel lemma (polynomials that agree
-everywhere are identical). We axiomatize this step. -/
+everywhere are identical). We axiomatize this step.
+
+**Why this is probabilistically sound (Schwartz-Zippel argument).**
+Fix any failing witness `a` (i.e., suppose `a i ≠ a (σ i)` for some `i`).
+The permutation check `numProd a β γ = denProd a σ β γ` can be rewritten
+as the vanishing of a polynomial `P(β)` of degree at most `n` over `Fp`.
+This polynomial is nonzero when the copy constraints fail, because the
+numerator and denominator products are distinct multisets of linear factors
+in `β` (the failing row contributes unequal factors on each side).
+By the Schwartz-Zippel lemma, a nonzero polynomial of degree `n` over `Fp`
+has at most `n` roots, so a uniformly random challenge `β ∈ Fp` causes a
+false permutation check to pass with probability at most `n / |Fp|`.
+Since `|Fp| ≈ 2^254`, this soundness error is cryptographically negligible.
+
+In the Halo 2 protocol, `β` is derived via the Fiat-Shamir transcript, so
+the prover cannot adaptively choose `β` after committing to `a`.
+
+**What would be needed to prove this formally.**
+A formal Lean 4 proof of this axiom would require three ingredients:
+1. **Symbolic polynomial representation**: express `numProd a · β γ` and
+   `denProd a σ · β γ` as evaluations of explicit elements of `Polynomial Fp`
+   in the variable `β`, bridging the `Finset.prod` definitions to `Polynomial.eval`.
+2. **Nonzero polynomial witness**: show that if `¬ copySatisfied a σ`, then
+   the difference `numPoly - denPoly` is a nonzero element of `Polynomial Fp`
+   of degree ≤ `n`. This requires reasoning about roots of products of linear
+   factors and the unique factorization structure of `Fp[β]`.
+3. **Schwartz-Zippel conclusion**: apply `Polynomial.card_roots_le_degree`
+   from Mathlib, which states that a nonzero polynomial of degree `d` over a
+   field has at most `d` roots, to conclude that `{β | numProd a β γ = denProd a σ β γ}`
+   has cardinality ≤ `n`. Since the hypothesis assumes equality for ALL `β`,
+   the polynomial must be identically zero, contradicting step 2.
+
+This chain of reasoning is in principle provable from existing Mathlib
+primitives, but requires substantial setup — particularly the formal bridge
+from `Finset.prod` to `Polynomial Fp` — that is beyond the current scope. -/
 axiom permCheck_sound {n : ℕ} (a : Column n) (σ : WirePerm n)
     (hσ : Function.Bijective σ)
     (hcheck : ∀ β γ : Pasta.Fp, permCheck a σ β γ) :
