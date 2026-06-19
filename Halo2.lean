@@ -4,4 +4,5 @@ import Halo2.Properties
 import Halo2.RangeCheck
 import Halo2.Transcript
 import Halo2.ECCGadget
+import Halo2.ECCGadgetConstraints
 import Halo2.SinsemillaGadget
